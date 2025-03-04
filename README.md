@@ -1,29 +1,31 @@
-# System Architecture
+# IOT Car Tracking
 
-## Sources
+## System Architecture
+
+### Sources
 -   Vehicle information from location A to location B
 -   GPS information for accuracy
 -   Camera snapshots from vehicle. Dummy photos
 -   Weather information
 -   Emergency information for accidents, etc.
 
-## Docker Container
+### Docker Container
 -   Run Kafka with Zookeeper, mutiple brokers
 -   Apache Spark is the consumer
 
-## Downstream
+### Downstream
 -   Stream raw data from Spark to S3 bucket
 -   Write condition with AWS Glue to extract information from raw data in S3 using data catalog
 -   AWS IAM will control AWS services
 -   Endpoints can be AWS Redshift or AWS Athena
 
-## Visualization
+### Visualization
 -   PowerBI
 -   Tableau
 -   Other options such as Apache Preset, Metabase
 
 
-## Step Up
+### Step Up
 1. wsl to use linux base
 2. python3 -m venv car_tracking
 3. source car_tracking/bin/activate
@@ -36,24 +38,22 @@
 9. touch jobs/spack-city.py
     -   spark-city.py is where we write the spark jobs that listen to events from Kafka
 
-## Packages
+### Packages
 1. pip install confluent-kafka simplejson pyspark
 NOTE: If you have issues with pip, delete the venv and recreate it, then pip install
 2. pip freeze > requirements.txt
 
 ## main.py
 
-
-
-## Docker Desktop
+### Docker Desktop
 1. When main.py is running, to see the topics [vehicle_data, gps_data, emergency_data, traffic_data, weather_data], in Docker desktop, do the following.
     a. Select the broker container
     b. Got to 'Exec'
     c. run 'kafka-topics --list --bootstrap-server broker:29092 . This will list the topics you have in your code that was pushed to Kafka.
     d. To review the data produced in each topic, run 'kafka-console-consumer --topic <topic name> --bootstrap-server broker:9092 --from-beginning
 
-# AWS Services
-## S3
+## AWS Services
+### S3
 1. Create bucket to collect streamed data from kafka and Spark.
     a. Make sure bucket does not 'Block all public access'
     b. Bucket policy:
@@ -78,7 +78,7 @@ NOTE: If you have issues with pip, delete the venv and recreate it, then pip ins
         '''
 2. touch jobs/config.py . This will contain your AWS Access Key.
 
-## spark-city.py
+### spark-city.py
 1. To view spark web UI, go to Docker Desktop, select spark-master-1, go to ports, select 'Show all ports', and select '9090:8080'. '7077:7077' is the spark master url where we are submitting our spark jobs.
     a. Here you will be able to see the workers
 2. For streaming, the spark .config will need a Kafka jar from the Maven Repo.
