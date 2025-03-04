@@ -1,0 +1,98 @@
+# This is a spark module
+# &spark-common is a variable that can be used
+x-spark-common: &spark-common
+  image: bitnami/spark:latest
+  volumes:
+    - ./jobs:/opt/bitnami/spark/jobs
+  command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+  depends_on:
+    - spark-master
+  environment:
+    SPARK_MODE: Worker
+    SPARK_WORKER_CORES: 2 # Number of cores. More is best
+    SPARK_WORKER_MEMORY: 1g # Minimum 1 Gig
+    SPARK_MASTER_URL: spark://spark-master:7077
+  networks:
+    - datamasterylab
+
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:  
+      # CMD: for Dockerfile command
+      # bash: run shell
+      # -c: Tells bash to execute following cmd as string
+      # echo 'ruok' | nc localhost 2181: ruok short for "Are you Ok?"
+        # nc: Netcat
+      # Checks if ZooKeeper server is running and respoinsive. Returns output: imok
+      test: [ 'CMD', 'bash', '-c', "echo 'ruok' | nc localhost 2181" ] # Bash cmd asking "Are you Ok?"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: 
+      - datamasterylab
+  broker:
+    image: confluentinc/cp-server:latest
+    hostname: broker
+    container_name: broker
+    depends_on:
+      zookeeper:
+        condition: service_healthy  # Broker runs only if healthcheck returns a clean bill of health
+    ports:
+      - "9092:9092"
+      - "9091:9091"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092 # ports used to communication with broker
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081  # Schema registry not used. Can remove
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'false'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+    healthcheck:
+      # nc: Netcat to check network connection
+      # -z: Netcat to scan for an open port
+      # Checks if Kafka, or service on port 9092 is running
+      test: [ 'CMD', 'bash', '-c', "nc -z localhost 9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - datamasterylab
+  spark-master:
+    image: bitnami/spark:latest
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+    command: bin/spark-class org.apache.spark.deploy.master.Master
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "9090:8080"
+      - "7077:7077"
+    networks:
+      - datamasterylab
+  spark-worker-1:
+    <<: *spark-common
+  spark-worker-2:
+    <<: *spark-common
+networks:
+  datamasterylab:
