@@ -10,7 +10,7 @@ def main():
     .config("spark.jars.packages", 
             "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,"
             "org.apache.hadoop:hadoop-aws:3.3.1,"
-            "com.amazonaws:aws-java-sdk:1.11.469") \
+            "com.amazonaws:aws-java-sdk-bundle:1.12.262") \
     .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
     .config("spark.hadoop.fs.s3a.access.key", configuration.get('AWS_ACCESS_KEY')) \
     .config("spark.hadoop.fs.s3a.secret.key", configuration.get('AWS_SECRET_KEY')) \
@@ -112,16 +112,16 @@ def main():
     # join all the dataframes with id and timestamps
     # join
 
-    query1 = streamWriter(vehicleDF, 's3a://spark-streaming-data-myy/checkpoints/vehicle_data',
-                 's3a://spark-streaming-data/data/vehicle_data')
-    query2 = streamWriter(gpsDF, 's3a://spark-streaming-data-myy/checkpoints/gps_data',
-                 's3a://spark-streaming-data/data/gps_data')
-    query3 = streamWriter(trafficDF, 's3a://spark-streaming-data-myy/checkpoints/traffic_data',
-                 's3a://spark-streaming-data/data/traffic_data')
-    query4 = streamWriter(weatherDF, 's3a://spark-streaming-data-myy/checkpoints/weather_data',
-                 's3a://spark-streaming-data/data/weather_data')
-    query5 = streamWriter(emergencyDF, 's3a://spark-streaming-data-myy/checkpoints/emergency_data',
-                 's3a://spark-streaming-data/data/emergency_data')
+    query1 = streamWriter(vehicleDF, f's3a://{configuration.get('S3_BUCKET_NAME')}/checkpoints/vehicle_data',
+                 f's3a://{configuration.get('S3_BUCKET_NAME')}/data/vehicle_data')
+    query2 = streamWriter(gpsDF, f's3a://{configuration.get('S3_BUCKET_NAME')}/checkpoints/gps_data',
+                 f's3a://{configuration.get('S3_BUCKET_NAME')}/data/gps_data')
+    query3 = streamWriter(trafficDF, f's3a://{configuration.get('S3_BUCKET_NAME')}/checkpoints/traffic_data',
+                 f's3a://{configuration.get('S3_BUCKET_NAME')}/data/traffic_data')
+    query4 = streamWriter(weatherDF, f's3a://{configuration.get('S3_BUCKET_NAME')}/checkpoints/weather_data',
+                 f's3a://{configuration.get('S3_BUCKET_NAME')}/data/weather_data')
+    query5 = streamWriter(emergencyDF, f's3a://{configuration.get('S3_BUCKET_NAME')}/checkpoints/emergency_data',
+                 f's3a://{configuration.get('S3_BUCKET_NAME')}/data/emergency_data')
 
     query5.awaitTermination()
 

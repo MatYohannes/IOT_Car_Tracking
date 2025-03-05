@@ -7,12 +7,12 @@ import uuid
 import time
 
 
-LONDON_COORDINATES = { "latitude": 51.5074, "longitude": -0.1278 }
-BIRMINGHAM_COORDINATES = { "latitude": 52.4862, "longitude": -1.8904 }
+LOS_ANGELES_COORDINATES = { "latitude": 34.0522, "longitude": -118.2437 }
+SAN_DIEGO_COORDINATES = { "latitude": 32.7157, "longitude": -117.1647 }
 
 # Calculate the movement in increments
-LATITUDE_INCREMENT = (BIRMINGHAM_COORDINATES['latitude'] - LONDON_COORDINATES['latitude']) / 100
-LONGITUDE_INCREMENT = (BIRMINGHAM_COORDINATES['longitude'] - LONDON_COORDINATES['longitude']) / 100
+LATITUDE_INCREMENT = (SAN_DIEGO_COORDINATES['latitude'] - LOS_ANGELES_COORDINATES['latitude']) / 100
+LONGITUDE_INCREMENT = (SAN_DIEGO_COORDINATES['longitude'] - LOS_ANGELES_COORDINATES['longitude']) / 100
 
 # Environment Variables for configuration
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
@@ -24,7 +24,7 @@ EMERGENCY_TOPIC = os.getenv('EMERGENCY_TOPIC', 'emergency_data')
 
 random.seed(42)
 start_time = datetime.now()
-start_location = LONDON_COORDINATES.copy()
+start_location = LOS_ANGELES_COORDINATES.copy()
 
 
 def get_next_time():
@@ -149,8 +149,8 @@ def simulate_journey(producer, device_id):
         emergency_incident_data = generate_emergency_incident_data(device_id, vehicle_data['timestamp'], vehicle_data['location'])
 
 
-        if(vehicle_data['location'][0] >= BIRMINGHAM_COORDINATES['latitude']
-           and vehicle_data['location'][1] <= BIRMINGHAM_COORDINATES['longitude']):
+        if(vehicle_data['location'][0] >= SAN_DIEGO_COORDINATES['latitude']
+           and vehicle_data['location'][1] <= SAN_DIEGO_COORDINATES['longitude']):
             print('Vehicle has reached Birmingham. Simulation')
             break
 
