@@ -14,8 +14,10 @@ SAN_DIEGO_COORDINATES = { "latitude": 32.7157, "longitude": -117.1647 }
 LATITUDE_INCREMENT = (SAN_DIEGO_COORDINATES['latitude'] - LOS_ANGELES_COORDINATES['latitude']) / 100
 LONGITUDE_INCREMENT = (SAN_DIEGO_COORDINATES['longitude'] - LOS_ANGELES_COORDINATES['longitude']) / 100
 
-# Environment Variables for configuration
+# Retrieve Kafka broker connection details from env variables. Default is localhost:9092
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
+
+# Define Kakfa topic names for different data streams. Default are set.
 VEHICLE_TOPIC = os.getenv('VEHICLE_TOPIC', 'vehicle_data')
 GPS_TOPIC = os.getenv('GPS_TOPIC', 'gps_data')
 TRAFFIC_TOPIC = os.getenv('TRAFFIC_TOPIC', 'traffic_data')
@@ -81,7 +83,12 @@ def generate_emergency_incident_data(device_id, timestamp, location):
         'description': 'Description of the incident'
     }
 
-
+'''
+    Since JSON does not support UUID objects natively, this function converts UUIDs to string  before serialization.
+    Error is raised if object is not a UUID.
+    Purpose is to make all Kafka messages JSON-compatible since downstream consumers of the Kafka.
+    This function is used with json.dumps(data, default=json_serializer)
+'''
 def json_serializer(obj):
     if isinstance(obj, uuid.UUID):
         return str(obj)
@@ -94,7 +101,14 @@ def delivery_report(err, msg):
     else:
         print(f'Message deliverd to {msg.topic()} [{msg.partition()}]')
 
-
+'''
+    The function publishes JSON-encoded data to Kafka and makes sure the messages are promperly formatted (json_serializer) with the UUID, data is partitioned, delivery of success or failure is tracked with delivery_report, and no messages remain unsent due to buffering. 
+    Topic: is the Kafka topic to send the message to
+    key: uses the field 'id' which is a UUID for partitioning messages in Kafka
+    value: data is converted to JSON
+    on_delivery: logs success or failure of message
+    flush: forces all buffered messages to be sent to Kafka immediately
+'''
 def produce_data_to_kafka(producer, topic, data):
     producer.produce(
         topic,
@@ -171,6 +185,9 @@ if __name__ == "__main__":
         'bootstrap.servers': KAFKA_BOOTSTRAP_SERVERS,
         'error_cb': lambda err: print(f'Kafka error: {err}')
     }
+    '''
+       SerializingProducer allows messages to be sent to Kafka topic with aynce message handling. It serilizes message before sending. Ideal for structured data streaming.
+    '''
     producer = SerializingProducer(producer_config)
 
     try:
